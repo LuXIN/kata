@@ -1,17 +1,12 @@
 <?php
 
-require_once __DIR__ . '/../src/Entity/Destination.php';
-require_once __DIR__ . '/../src/Entity/Quote.php';
-require_once __DIR__ . '/../src/Entity/Site.php';
-require_once __DIR__ . '/../src/Entity/Template.php';
-require_once __DIR__ . '/../src/Entity/User.php';
-require_once __DIR__ . '/../src/Helper/SingletonTrait.php';
-require_once __DIR__ . '/../src/Context/ApplicationContext.php';
-require_once __DIR__ . '/../src/Repository/Repository.php';
-require_once __DIR__ . '/../src/Repository/DestinationRepository.php';
-require_once __DIR__ . '/../src/Repository/QuoteRepository.php';
-require_once __DIR__ . '/../src/Repository/SiteRepository.php';
-require_once __DIR__ . '/../src/TemplateManager.php';
+use Evaneos\Kata\Context\ApplicationContext;
+use Evaneos\Kata\Entity\Quote;
+use Evaneos\Kata\Entity\Template;
+use Evaneos\Kata\Repository\DestinationRepository;
+use Evaneos\Kata\TemplateManager;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 class TemplateManagerTest extends PHPUnit_Framework_TestCase
 {
@@ -63,9 +58,10 @@ www.evaneos.com
             ]
         );
 
-        $this->assertEquals('Votre voyage avec une agence locale ' . $expectedDestination->countryName, $message->subject);
+        $this->assertEquals('Votre voyage avec une agence locale ' . $expectedDestination->countryName,
+            $message->getSubject());
         $this->assertEquals("
-Bonjour " . $expectedUser->firstname . ",
+Bonjour " . $expectedUser->firstName . ",
 
 Merci d'avoir contacté un agent local pour votre voyage " . $expectedDestination->countryName . ".
 
@@ -73,6 +69,6 @@ Bien cordialement,
 
 L'équipe Evaneos.com
 www.evaneos.com
-", $message->content);
+", $message->getContent());
     }
 }

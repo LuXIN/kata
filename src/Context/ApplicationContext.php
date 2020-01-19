@@ -20,6 +20,9 @@ class ApplicationContext
      */
     private $currentUser;
 
+    /**
+     * ApplicationContext constructor.
+     */
     protected function __construct()
     {
         $faker = \Faker\Factory::create();
@@ -27,11 +30,17 @@ class ApplicationContext
         $this->currentUser = new User($faker->randomNumber(), $faker->firstName, $faker->lastName, $faker->email);
     }
 
+    /**
+     * @return Site
+     */
     public function getCurrentSite()
     {
         return $this->currentSite;
     }
 
+    /**
+     * @return User
+     */
     public function getCurrentUser()
     {
         return $this->currentUser;

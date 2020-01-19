@@ -2,15 +2,17 @@
 
 namespace Evaneos\Kata;
 
+use Evaneos\Kata\Context\ApplicationContext;
 use Evaneos\Kata\Entity\Quote;
 use Evaneos\Kata\Entity\Template;
-use Evaneos\Kata\Outil\UserInformationPlaceHolder;
+use Evaneos\Kata\Entity\User;
 use Evaneos\Kata\Render\QuoteRender;
 use Evaneos\Kata\Repository\DestinationRepository;
 use Evaneos\Kata\Repository\SiteRepository;
 
 class TemplateManager
 {
+    const PLACEHOLDER_USER_FIRST_NAME = '[user:first_name]';
     const PLACEHOLDER_QUOTE_LINK = '[quote:destination_link]';
     const PLACEHOLDER_QUOTE_DESTINATION_NAME = '[quote:destination_name]';
     const PLACEHOLDER_QUOTE_SUMMARY_HTML = '[quote:summary_html]';
@@ -36,19 +38,36 @@ class TemplateManager
     private function computeText($text, array $data)
     {
         $text = $this->replaceQuoteInformation($text, isset($data['quote']) ? $data['quote'] : null);
-
-        $userPlaceholder = new UserInformationPlaceHolder(isset($data['user']) ? $data['user'] : null);
-        $text = $userPlaceholder->replace($text);
-
-        return $text;
+        return $this->replaceUserInformation($text, isset($data['user']) ? $data['user'] : null);
     }
 
     /**
-     * @param string $text
-     * @param Quote  $quote
+     * @param string    $text
+     * @param User|null $user
      * @return string|string[]
      */
-    private function replaceQuoteInformation($text, Quote $quote)
+    protected function replaceUserInformation($text, User $user = null)
+    {
+        // nothing to replace
+        if (false === strpos($text, static::PLACEHOLDER_USER_FIRST_NAME)) {
+            return $text;
+        }
+
+        if (!$user) {
+            $applicationContext = ApplicationContext::getInstance();
+            $user = $applicationContext->getCurrentUser();
+        }
+
+        return str_replace(static::PLACEHOLDER_USER_FIRST_NAME,
+            ucfirst($user->firstName), $text);
+    }
+
+    /**
+     * @param string     $text
+     * @param Quote|null $quote
+     * @return string|string[]
+     */
+    protected function replaceQuoteInformation($text, Quote $quote = null)
     {
         $text = $this->replaceQuoteSummaryHtml($text, $quote);
         $text = $this->replaceQuoteSummary($text, $quote);
