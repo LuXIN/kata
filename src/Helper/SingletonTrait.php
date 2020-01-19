@@ -1,5 +1,7 @@
 <?php
 
+namespace Evaneos\Kata\Helper;
+
 trait SingletonTrait
 {
     /**

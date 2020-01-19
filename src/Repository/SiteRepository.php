@@ -1,5 +1,10 @@
 <?php
 
+namespace Evaneos\Kata\Repository;
+
+use Evaneos\Kata\Entity\Site;
+use Evaneos\Kata\Helper\SingletonTrait;
+
 class SiteRepository implements Repository
 {
     use SingletonTrait;
@@ -8,17 +13,15 @@ class SiteRepository implements Repository
 
     /**
      * SiteRepository constructor.
-     *
      */
     public function __construct()
     {
         // DO NOT MODIFY THIS METHOD
-        $this->url = Faker\Factory::create()->url;
+        $this->url = \Faker\Factory::create()->url;
     }
 
     /**
      * @param int $id
-     *
      * @return Site
      */
     public function getById($id)

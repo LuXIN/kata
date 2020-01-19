@@ -1,17 +1,41 @@
 <?php
 
+namespace Evaneos\Kata\Entity;
+
 class User
 {
+    /**
+     * @var string
+     */
     public $id;
-    public $firstname;
-    public $lastname;
+
+    /**
+     * @var string
+     */
+    public $firstName;
+
+    /**
+     * @var string
+     */
+    public $lastName;
+
+    /**
+     * @var string
+     */
     public $email;
 
-    public function __construct($id, $firstname, $lastname, $email)
+    /**
+     * User constructor.
+     * @param int    $id
+     * @param string $firstName
+     * @param string $lastName
+     * @param string $email
+     */
+    public function __construct($id, $firstName, $lastName, $email)
     {
         $this->id = $id;
-        $this->firstname = $firstname;
-        $this->lastname = $lastname;
+        $this->firstName = $firstName;
+        $this->lastName = $lastName;
         $this->email = $email;
     }
 }

@@ -1,5 +1,11 @@
 <?php
 
+namespace Evaneos\Kata\Context;
+
+use Evaneos\Kata\Entity\Site;
+use Evaneos\Kata\Entity\User;
+use Evaneos\Kata\Helper\SingletonTrait;
+
 class ApplicationContext
 {
     use SingletonTrait;
@@ -8,6 +14,7 @@ class ApplicationContext
      * @var Site
      */
     private $currentSite;
+
     /**
      * @var User
      */

@@ -1,73 +1,129 @@
 <?php
 
+namespace Evaneos\Kata;
+
+use Evaneos\Kata\Entity\Quote;
+use Evaneos\Kata\Entity\Template;
+use Evaneos\Kata\Outil\UserInformationPlaceHolder;
+use Evaneos\Kata\Render\QuoteRender;
+use Evaneos\Kata\Repository\DestinationRepository;
+use Evaneos\Kata\Repository\SiteRepository;
+
 class TemplateManager
 {
-    public function getTemplateComputed(Template $tpl, array $data)
+    const PLACEHOLDER_QUOTE_LINK = '[quote:destination_link]';
+    const PLACEHOLDER_QUOTE_DESTINATION_NAME = '[quote:destination_name]';
+    const PLACEHOLDER_QUOTE_SUMMARY_HTML = '[quote:summary_html]';
+    const PLACEHOLDER_QUOTE_SUMMARY = '[quote:summary]';
+
+    /**
+     * @param Template $template
+     * @param array    $data
+     * @return Template
+     */
+    public function getTemplateComputed(Template $template, array $data)
     {
-        if (!$tpl) {
-            throw new \RuntimeException('no tpl given');
-        }
-
-        $replaced = clone($tpl);
-        $replaced->subject = $this->computeText($replaced->subject, $data);
-        $replaced->content = $this->computeText($replaced->content, $data);
-
-        return $replaced;
+        $template->setSubject($this->computeText($template->getSubject(), $data));
+        $template->setContent($this->computeText($template->getContent(), $data));
+        return $template;
     }
 
+    /**
+     * @param string $text
+     * @param array  $data
+     * @return string|string[]
+     */
     private function computeText($text, array $data)
     {
-        $APPLICATION_CONTEXT = ApplicationContext::getInstance();
+        $text = $this->replaceQuoteInformation($text, isset($data['quote']) ? $data['quote'] : null);
 
-        $quote = (isset($data['quote']) and $data['quote'] instanceof Quote) ? $data['quote'] : null;
-
-        if ($quote)
-        {
-            $_quoteFromRepository = QuoteRepository::getInstance()->getById($quote->id);
-            $usefulObject = SiteRepository::getInstance()->getById($quote->siteId);
-            $destinationOfQuote = DestinationRepository::getInstance()->getById($quote->destinationId);
-
-            if(strpos($text, '[quote:destination_link]') !== false){
-                $destination = DestinationRepository::getInstance()->getById($quote->destinationId);
-            }
-
-            $containsSummaryHtml = strpos($text, '[quote:summary_html]');
-            $containsSummary     = strpos($text, '[quote:summary]');
-
-            if ($containsSummaryHtml !== false || $containsSummary !== false) {
-                if ($containsSummaryHtml !== false) {
-                    $text = str_replace(
-                        '[quote:summary_html]',
-                        Quote::renderHtml($_quoteFromRepository),
-                        $text
-                    );
-                }
-                if ($containsSummary !== false) {
-                    $text = str_replace(
-                        '[quote:summary]',
-                        Quote::renderText($_quoteFromRepository),
-                        $text
-                    );
-                }
-            }
-
-            (strpos($text, '[quote:destination_name]') !== false) and $text = str_replace('[quote:destination_name]',$destinationOfQuote->countryName,$text);
-        }
-
-        if (isset($destination))
-            $text = str_replace('[quote:destination_link]', $usefulObject->url . '/' . $destination->countryName . '/quote/' . $_quoteFromRepository->id, $text);
-        else
-            $text = str_replace('[quote:destination_link]', '', $text);
-
-        /*
-         * USER
-         * [user:*]
-         */
-        $_user  = (isset($data['user'])  and ($data['user']  instanceof User))  ? $data['user']  : $APPLICATION_CONTEXT->getCurrentUser();
-        if($_user) {
-            (strpos($text, '[user:first_name]') !== false) and $text = str_replace('[user:first_name]'       , ucfirst(mb_strtolower($_user->firstname)), $text);
-        }
+        $userPlaceholder = new UserInformationPlaceHolder(isset($data['user']) ? $data['user'] : null);
+        $text = $userPlaceholder->replace($text);
 
         return $text;
+    }
+
+    /**
+     * @param string $text
+     * @param Quote  $quote
+     * @return string|string[]
+     */
+    private function replaceQuoteInformation($text, Quote $quote)
+    {
+        $text = $this->replaceQuoteSummaryHtml($text, $quote);
+        $text = $this->replaceQuoteSummary($text, $quote);
+        $text = $this->replaceQuoteDestinationName($text, $quote);
+        $text = $this->replaceQuoteDestinationLink($text, $quote);
+        return $text;
+    }
+
+    /**
+     * @param string $text
+     * @param Quote  $quote
+     * @return string|string[]
+     */
+    private function replaceQuoteSummaryHtml($text, Quote $quote)
+    {
+        if (false === strpos($text, static::PLACEHOLDER_QUOTE_SUMMARY_HTML)) {
+            return $text;
+        }
+
+        return str_replace(
+            static::PLACEHOLDER_QUOTE_SUMMARY_HTML,
+            QuoteRender::renderHtml($quote),
+            $text
+        );
+    }
+
+    /**
+     * @param string $text
+     * @param Quote  $quote
+     * @return string|string[]
+     */
+    private function replaceQuoteDestinationName($text, Quote $quote)
+    {
+        if (false === strpos($text, static::PLACEHOLDER_QUOTE_DESTINATION_NAME)) {
+            return $text;
+        }
+
+        $destinationOfQuote = DestinationRepository::getInstance()->getById($quote->getDestinationId());
+
+        return str_replace(static::PLACEHOLDER_QUOTE_DESTINATION_NAME,
+            $destinationOfQuote->countryName, $text);
+    }
+
+    /**
+     * @param string $text
+     * @param Quote  $quote
+     * @return string|string[]
+     */
+    private function replaceQuoteDestinationLink($text, Quote $quote)
+    {
+        $destination = DestinationRepository::getInstance()->getById($quote->getDestinationId());
+
+        if (isset($destination)) {
+            $site = SiteRepository::getInstance()->getById($quote->getSiteId());
+            return str_replace(static::PLACEHOLDER_QUOTE_LINK,
+                $site->url . '/' . $destination->countryName . '/quote/' . $quote->getId(), $text);
+        }
+        return str_replace(static::PLACEHOLDER_QUOTE_LINK, '', $text);
+    }
+
+    /**
+     * @param string $text
+     * @param Quote  $quote
+     * @return string|string[]
+     */
+    private function replaceQuoteSummary($text, Quote $quote)
+    {
+        if (false === strpos($text, static::PLACEHOLDER_QUOTE_SUMMARY_HTML)) {
+            return $text;
+        }
+
+        return str_replace(
+            static::PLACEHOLDER_QUOTE_SUMMARY,
+            QuoteRender::renderText($quote),
+            $text
+        );
     }
 }

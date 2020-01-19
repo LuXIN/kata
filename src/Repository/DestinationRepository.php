@@ -1,11 +1,28 @@
 <?php
 
+namespace Evaneos\Kata\Repository;
+
+use Evaneos\Kata\Entity\Destination;
+use Evaneos\Kata\Helper\SingletonTrait;
+use Faker\Factory;
+
 class DestinationRepository implements Repository
 {
     use SingletonTrait;
 
+    /**
+     * @var string
+     */
     private $country;
+
+    /**
+     * @var string
+     */
     private $conjunction;
+
+    /**
+     * @var string
+     */
     private $computerName;
 
     /**
@@ -13,14 +30,13 @@ class DestinationRepository implements Repository
      */
     public function __construct()
     {
-        $this->country = Faker\Factory::create()->country;
+        $this->country = Factory::create()->country;
         $this->conjunction = 'en';
-        $this->computerName = Faker\Factory::create()->slug();
+        $this->computerName = Factory::create()->slug();
     }
 
     /**
      * @param int $id
-     *
      * @return Destination
      */
     public function getById($id)
